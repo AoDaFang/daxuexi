@@ -16,7 +16,7 @@
       :src="videoList[videoIndex].src"
     ></video>
     <!-- 问题列表 -->
-    <div class="question-wrapper" v-if="showState === 2">
+    <div :class="['question-wrapper', {'blur': isShowBlur}]" v-if="showState === 2">
       <div class="question-title">{{questionList[questionIndex].title}}</div>
       <div class="option-wrapper">
         <div
@@ -36,6 +36,7 @@
       <div class="sure-btn" @click="subAnswer"><img src="../assets/imgs/button1.png" alt=""></div>
       <div class="gif-wrapper"><img src="../assets/imgs/tuanbao.gif" alt=""></div>
     </div>
+    <div v-if="showState === 4">恭喜完成武城七一大学习</div>
   </div>
 </template>
 
@@ -57,9 +58,9 @@ export default {
         {
           title: "问题1",
           options: ["问题1选项1", "问题1选项2", "问题1选项3"],
-          multiple: false, // 是否多选
+          multiple: true, // 是否多选
           activationState:[0, 0, 0], // 选中情况
-          rightKey: [0, 0, 1], // 正确答案
+          rightKey: [1, 0, 1], // 正确答案
           sign: [0, 0, 0] // 显示对号错号 0不显示 1对号 2错号 
         },
         {
@@ -98,18 +99,56 @@ export default {
     },
     // 提交答案
     subAnswer() {
-      // 先判定对错
-      // if()
+      console.log('提交答案');
+      let noAnswerSign = true;
+      for(let i = 0; i<this.questionList[this.questionIndex].activationState.length; i++){
+        if(this.questionList[this.questionIndex].activationState[i] === 1){
+          noAnswerSign = false;
+          break;
+        }
+      }
+      if(noAnswerSign) return; // 没有答案不操作
+      /**
+       * 判定对错、显示对错号逻辑
+       */
+      if(this.questionList[this.questionIndex].activationState.toString() === this.questionList[this.questionIndex].rightKey.toString()){
+        console.log('回答正确');
+        // 显示对号
+        this.questionList[this.questionIndex].sign = this.questionList[this.questionIndex].rightKey;
+      } else {
+        console.log('回答错误');
+        // 显示对号和错号
+        for(var i = 0; i<this.questionList[this.questionIndex].rightKey.length; i++){
+          // 此项应该选中 显示对号
+          if(this.questionList[this.questionIndex].rightKey[i] === 1){
+            this.$set(this.questionList[this.questionIndex].sign, i, 1);
+          } else {
+            // 此项不应该选 但是选了 直接显示错号
+            if(this.questionList[this.questionIndex].activationState[i] === 1){
+              this.$set(this.questionList[this.questionIndex].sign, i, 2);
+            }
+          }
+        }
+      }
 
 
-      // if (this.questionIndex < this.questionIndex.length - 1) {
-      //   this.questionIndex++;
-      //   this.showState = 1;
-      //   this.playVideo();
-      // } else {
-      //   console.log("结束画面");
-      //   this.showState = 4;
-      // }
+      setTimeout(() => {
+        this.isShowBlur = true;
+        if (this.questionIndex < this.questionList.length - 1) {
+          this.questionIndex++;
+          setTimeout(()=>{
+            this.showState = 1;
+            this.isShowBlur = false;
+          }, 500);
+          this.playVideo();
+        } else {
+          console.log("结束画面");
+          setTimeout(()=>{
+            this.showState = 4;
+            this.isShowBlur = false;
+          }, 500);
+        }
+      }, 2000);
     },
     // 点击选项
     dealClickOption(e){
@@ -186,7 +225,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 5px 5px 5px #888888;
+  box-shadow: 5px 5px 5px #666;
   color: #983426;
   font-size: 18px;
 }
